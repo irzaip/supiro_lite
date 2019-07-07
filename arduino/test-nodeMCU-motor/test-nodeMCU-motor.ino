@@ -7,6 +7,7 @@
 
 #include <Wire.h> 
 
+#define DEBUG 1
 #define DIRA 0
 #define PWMA 5
 #define DIRB 2 
@@ -45,8 +46,13 @@ void loop() {
   delay(5000);
   
   Serial.println("Starting motor...");
-  analogWrite(PWMA,1000);
-  analogWrite(PWMB,1000);
+  analogWrite(PWMA,700);
+  analogWrite(PWMB,700);
+  delay(3000);
+
+  Serial.println("Starting motor...");
+  analogWrite(PWMA,1023);
+  analogWrite(PWMB,1023);
   delay(3000);
 
   analogWrite(PWMA,0);
