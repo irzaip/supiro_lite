@@ -15,6 +15,7 @@
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/Range.h>
 #include <geometry_msgs/Twist.h>
+#include <supiro_lite/motorpower.h>
 #include <Wire.h> 
 #include <PID_v1.h>
 
@@ -51,40 +52,51 @@ ros::Publisher chatter("chatter", &str_msg);
 sensor_msgs::Range range_msg;         // Ultrasonic Range message
 std_msgs::Int16 int_msg;
 
-void cmd_velCallback( const geometry_msgs::Twist& CVel){
+void cmd_velCallback( const supiro_lite::motorpower& CVel){
   //geometry_msgs::Twist twist = twist_msg;   
-    double vel_x = CVel.linear.x;
-    double vel_th = CVel.angular.z;
-    double right_vel = 0.0;
-    double left_vel = 0.0;
-    Serial.println(vel_x);
-    // turning
-    if(vel_x == 0){  
-        right_vel = vel_th * WheelSeparation / 2.0;
-        left_vel = (-1) * right_vel;
-    }
-    // forward / backward
-    else if(vel_th == 0){ 
-        left_vel = right_vel = vel_x;
-    }
-    // moving doing arcs
-    else{ 
-        left_vel = vel_x - vel_th * WheelSeparation / 2.0;
-        right_vel = vel_x + vel_th * WheelSeparation / 2.0;
-    }
-    //write new command speeds to global vars 
-    lSet = left_vel;
-    rSet = right_vel;
+//    double vel_x = CVel.linear.x;
+//    double vel_th = CVel.angular.z;
+//    double right_vel = 0.0;
+//    double left_vel = 0.0;
+//    Serial.println(vel_x);
+//    // turning
+//    if(vel_x == 0){  
+//        right_vel = vel_th * WheelSeparation / 2.0;
+//        left_vel = (-1) * right_vel;
+//    }
+//    // forward / backward
+//    else if(vel_th == 0){ 
+//        left_vel = right_vel = vel_x;
+//    }
+//    // moving doing arcs
+//    else{ 
+//        left_vel = vel_x - vel_th * WheelSeparation / 2.0;
+//        right_vel = vel_x + vel_th * WheelSeparation / 2.0;
+//    }
+//    //write new command speeds to global vars 
+//    lSet = left_vel;
+//    rSet = right_vel;
+
+
+    int lpower = CVel.leftpwr;
+    int rpower = CVel.rightpwr;
+    int ldir = CVel.leftdir;
+    int rdir = CVel.rightdir;
     
     if(DEBUG){
       Serial.print("cmd_vel");
-      Serial.print(lSet);
+      Serial.print(lpower);
       Serial.print(",");
-      Serial.println(rSet);
+      Serial.println(rpower);
+      Serial.println(",");
+      Serial.print(ldir);
+      Serial.print(",");
+      Serial.println(rdir);
+
     }   
 }
 
-ros::Subscriber<geometry_msgs::Twist> Sub("/cmd_vel", &cmd_velCallback );
+ros::Subscriber<supiro_lite::motorpower> Sub("/motorpwr", &cmd_velCallback );
 
 // Be polite and say hello
 char hello[13] = "hello world!";
