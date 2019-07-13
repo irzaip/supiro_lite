@@ -12,12 +12,12 @@
 #include <ros.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Int16.h>
-#include <std_msgs/Float64.h>
-#include <sensor_msgs/Range.h>
-#include <geometry_msgs/Twist.h>
 #include <supiro_lite/motorpower.h>
+#include <supiro_lite/encoder.h>
+#include <supiro_lite/sonar.h>
+#
 #include <Wire.h> 
-#include <PID_v1.h>
+
 
 // DEFINE PIN
 #define DEBUG 1
@@ -35,70 +35,44 @@ int period = 50;                                   // PID period in milliseconds
 int rcurrenttime, rlasttime, lcurrenttime, llasttime;
 os_timer_t myTimer;
 double WheelSeparation= 0.135;                              // wheel separation in meters
-                            // wheel separation in meters
+int servpos=0;                            // wheel separation in meters
 
-const char* ssid     = "IRQ-NET";
-const char* password = "kupukupu";
+const char* ssid     = "IRQNET";
+const char* password = "zhafirah";
 // Set the rosserial socket server IP address
-IPAddress server(192,168,0,145);
+IPAddress server(192,168,30,50);
 // Set the rosserial socket server port
 const uint16_t serverPort = 11411;
 
 ros::NodeHandle nh;
-// Make a chatter publisher
-std_msgs::String str_msg;
-ros::Publisher chatter("chatter", &str_msg);
+// Make a encoder publisher
 
-sensor_msgs::Range range_msg;         // Ultrasonic Range message
+supiro_lite::encoder enc_msg;
+ros::Publisher encoder("encoder", &enc_msg);
+
+supiro_lite::sonar sonar_msg;
+ros::Publisher sonar("sonar", &sonar_msg);
+
 std_msgs::Int16 int_msg;
 
-void cmd_velCallback( const supiro_lite::motorpower& CVel){
-  //geometry_msgs::Twist twist = twist_msg;   
-//    double vel_x = CVel.linear.x;
-//    double vel_th = CVel.angular.z;
-//    double right_vel = 0.0;
-//    double left_vel = 0.0;
-//    Serial.println(vel_x);
-//    // turning
-//    if(vel_x == 0){  
-//        right_vel = vel_th * WheelSeparation / 2.0;
-//        left_vel = (-1) * right_vel;
-//    }
-//    // forward / backward
-//    else if(vel_th == 0){ 
-//        left_vel = right_vel = vel_x;
-//    }
-//    // moving doing arcs
-//    else{ 
-//        left_vel = vel_x - vel_th * WheelSeparation / 2.0;
-//        right_vel = vel_x + vel_th * WheelSeparation / 2.0;
-//    }
-//    //write new command speeds to global vars 
-//    lSet = left_vel;
-//    rSet = right_vel;
-
+void cmd_motor( const supiro_lite::motorpower& CVel){
 
     int lpower = CVel.leftpwr;
     int rpower = CVel.rightpwr;
     int ldir = CVel.leftdir;
     int rdir = CVel.rightdir;
     
-    if(DEBUG){
-      Serial.print("cmd_vel");
-      Serial.print(lpower);
-      Serial.print(",");
-      Serial.println(rpower);
-      Serial.println(",");
-      Serial.print(ldir);
-      Serial.print(",");
-      Serial.println(rdir);
-
-    }   
 }
 
-ros::Subscriber<supiro_lite::motorpower> Sub("/motorpwr", &cmd_velCallback );
+void cmd_servo( const std_msgs::Int16& CSrv){
+    servpos = CSrv.data;
+}
 
+ros::Subscriber<supiro_lite::motorpower> Sub("/motorpwr", &cmd_motor );
+
+ros::Subscriber<std_msgs::Int16> Serv("/servo", &cmd_servo );
 // Be polite and say hello
+
 char hello[13] = "hello world!";
 
 
@@ -117,38 +91,12 @@ void tic(void *pArg) {    // timerCallback, repeat every "period"
 }
 
 void motion(double lpwm, double rpwm) {  // move motor at pwm power and change directions flags only when motor cross stop
-  if(abs(lIn)<1){
-    if(lOut>=0){
-      ldir=1; 
-      llevel=HIGH; 
-    } else {
-      ldir=-1;
-      llevel=LOW; 
-    }
-  }
-  if(abs(rIn)<1){
-    if(rOut>=0){
-      rdir=1; 
-      rlevel=HIGH; 
-    } else {
-      rdir=-1;
-      rlevel=LOW; 
-    }
-  }
+
   analogWrite(PWMA, abs(lpwm));
   analogWrite(PWMB, abs(rpwm));
   digitalWrite(DIRA, llevel);
   digitalWrite(DIRB, rlevel);
 
-  if(DEBUG){
-  Serial.print(lpwm);
-  Serial.print(":");
-  Serial.print(rpwm);
-  Serial.print(":");
-  Serial.print(llevel);
-  Serial.print(":");
-  Serial.println(rlevel);
-  }
 }
 
 
@@ -194,7 +142,8 @@ void setup()
   Serial.println(nh.getHardware()->getLocalIP());
 
   // Start to be polite
-  nh.advertise(chatter);
+  nh.advertise(encoder);
+  nh.advertise(sonar);
   nh.subscribe(Sub);
 
 
@@ -217,9 +166,18 @@ void loop()
 
   if (nh.connected()) {
     Serial.println("Connected");
-    // Say hello
-    str_msg.data = hello;
-    chatter.publish( &str_msg );
+    // publish encoder value
+    enc_msg.leftenc = lmc;
+    enc_msg.rightenc = rmc;
+    encoder.publish( &enc_msg );
+    // reset encoder after publish
+    lmc = 0;
+    rmc = 0;
+
+    sonar_msg.servopos = servpos;
+    sonar_msg.pingval = 232;
+    sonar.publish( &sonar_msg );
+    
   } else {
     Serial.println("Not Connected");
   }

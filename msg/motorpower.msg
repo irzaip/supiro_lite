@@ -1,4 +1,4 @@
-uint8 leftpwr
-uint8 rightpwr
-uint8 leftdir
-uint8 rightdir
+int16 leftpwr
+int16 rightpwr
+int16 leftdir
+int16 rightdir
