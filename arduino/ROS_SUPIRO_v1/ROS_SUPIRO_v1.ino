@@ -57,10 +57,10 @@ std_msgs::Int16 int_msg;
 
 void cmd_motor( const supiro_lite::motorpower& CVel){
 
-    int lpower = CVel.leftpwr;
-    int rpower = CVel.rightpwr;
-    int ldir = CVel.leftdir;
-    int rdir = CVel.rightdir;
+    lSet = CVel.leftpwr;
+    rSet = CVel.rightpwr;
+    ldir = CVel.leftdir;
+    rdir = CVel.rightdir;
     
 }
 
@@ -78,24 +78,25 @@ char hello[13] = "hello world!";
 
 void tic(void *pArg) {    // timerCallback, repeat every "period"
 
-  if (lSet!=0) {lpwm = lSet * 1023;
+  if (lSet!=0) {lpwm = abs(lSet);
                 lSet = 0;}
-  if (rSet!=0) {rpwm = rSet * 1023;
+  if (rSet!=0) {rpwm = abs(rSet);
                 rSet = 0;}
 
-  motion(lpwm,rpwm); 
+  motion(lpwm,rpwm, ldir, rdir); 
 
   if (lpwm>0) {lpwm = lpwm - 20;}
   if (rpwm>0) {rpwm = rpwm - 20;}
-
+  if (lpwm<0) {lpwm = 0;}
+  if (rpwm<0) {rpwm = 0;}
 }
 
-void motion(double lpwm, double rpwm) {  // move motor at pwm power and change directions flags only when motor cross stop
+void motion(int lpwm, int rpwm, int ldir, int rdir) {  // move motor at pwm power and change directions flags only when motor cross stop
 
   analogWrite(PWMA, abs(lpwm));
   analogWrite(PWMB, abs(rpwm));
-  digitalWrite(DIRA, llevel);
-  digitalWrite(DIRB, rlevel);
+  digitalWrite(DIRA, ldir);
+  digitalWrite(DIRB, rdir);
 
 }
 
