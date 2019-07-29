@@ -105,7 +105,7 @@ void tic(void *pArg) {    // timerCallback, repeat every "period"
 
   motion(lpwm,rpwm, ldir, rdir); 
 
-  if DECELERATE {
+  if (DECELERATE) {
     if (lpwm>0) {lpwm = lpwm - 20;}
     if (rpwm>0) {rpwm = rpwm - 20;}
   }
