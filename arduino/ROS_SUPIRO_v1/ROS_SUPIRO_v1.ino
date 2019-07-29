@@ -19,8 +19,12 @@
 #include <Servo.h>
 
 
-// DEFINE PIN
+//DEFINE CONFIG
+#define DECELERATE 0
 #define DEBUG 1
+
+// DEFINE PIN
+
 #define DIRA 0
 #define PWMA 5
 #define DIRB 2 
@@ -101,8 +105,11 @@ void tic(void *pArg) {    // timerCallback, repeat every "period"
 
   motion(lpwm,rpwm, ldir, rdir); 
 
-  if (lpwm>0) {lpwm = lpwm - 20;}
-  if (rpwm>0) {rpwm = rpwm - 20;}
+  if DECELERATE {
+    if (lpwm>0) {lpwm = lpwm - 20;}
+    if (rpwm>0) {rpwm = rpwm - 20;}
+  }
+  
   if (lpwm<0) {lpwm = 0;}
   if (rpwm<0) {rpwm = 0;}
 }
